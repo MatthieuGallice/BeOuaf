@@ -1,0 +1,170 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, ScrollView } from 'react-native';
+import { usePetStore } from '../../store/usePetStore';
+
+const styles = StyleSheet.create({
+  container: { 
+    flex: 1, 
+    backgroundColor: '#F8F9FA' 
+  },
+  title: { 
+    fontSize: 24, 
+    fontWeight: '700',
+    marginVertical: 20,
+    marginHorizontal: 20
+  },
+  form: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    margin: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2
+  },
+  field: {
+    marginBottom: 15
+  },
+  label: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 5
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#DDD',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#FAFAFA'
+  },
+  saveButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 10
+  },
+  saveButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600'
+  }
+});
+
+export default function AnimalFormScreen({ route, navigation }: any) {
+  const existingAnimal = route.params?.animal;
+  const addAnimal = usePetStore((s) => s.addAnimal);
+  const updateAnimal = usePetStore((s) => s.updateAnimal);
+  
+  const [nom, setNom] = useState(existingAnimal?.nom || '');
+  const [espece, setEspece] = useState(existingAnimal?.espece || '');
+  const [race, setRace] = useState(existingAnimal?.race || '');
+  const [dateNaissance, setDateNaissance] = useState(existingAnimal?.date_naissance || new Date().toISOString().split('T')[0]);
+  const [poids, setPoids] = useState(existingAnimal?.poids?.toString() || '');
+  const [photoUrl, setPhotoUrl] = useState(existingAnimal?.photo_url || '');
+
+  const handleSave = async () => {
+    if (!nom || !espece) {
+      return Alert.alert('Erreur', 'Le nom et l\'espèce sont obligatoires');
+    }
+
+    try {
+      const animalData = {
+        nom,
+        espece,
+        race,
+        date_naissance: dateNaissance,
+        poids: parseFloat(poids) || 0,
+        photo_url: photoUrl || undefined
+      };
+
+      if (existingAnimal) {
+        await updateAnimal(existingAnimal.id, animalData);
+        Alert.alert('✅ Modifié', 'Animal mis à jour avec succès');
+      } else {
+        await addAnimal(animalData);
+        Alert.alert('✅ Ajouté', 'Nouvel animal ajouté avec succès');
+      }
+
+      navigation.goBack();
+    } catch (error: any) {
+      Alert.alert('Erreur', error.message);
+    }
+  };
+
+  return (
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>{existingAnimal ? 'Modifier' : 'Ajouter'} un animal</Text>
+      
+      <View style={styles.form}>
+        <View style={styles.field}>
+          <Text style={styles.label}>Nom *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: Rex"
+            value={nom}
+            onChangeText={setNom}
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Espèce *</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: Chien"
+            value={espece}
+            onChangeText={setEspece}
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Race</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: Labrador"
+            value={race}
+            onChangeText={setRace}
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Date de naissance</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="YYYY-MM-DD"
+            value={dateNaissance}
+            onChangeText={setDateNaissance}
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Poids (kg)</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Ex: 25.5"
+            value={poids}
+            onChangeText={setPoids}
+            keyboardType="decimal-pad"
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Photo URL</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="https://"
+            value={photoUrl}
+            onChangeText={setPhotoUrl}
+          />
+        </View>
+
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Text style={styles.saveButtonText}>💾 Enregistrer</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
